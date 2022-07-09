@@ -8,6 +8,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,16 +36,24 @@ func init() {
 // 	 os.Args = []string{"playground", "one_page.pdf", "two_pages.pdf"}
 //  }
 
-// Need to make the highlight regions slightly smaller in height, so as not
-// overlap with text below the highlight
-const SCALE_W = 1.0
-const SCALE_H = 0.76 // 0.76 is the maximum to get the right text for Alice
+var (
+	// Need to make the highlight regions slightly smaller in height, so as not
+	// overlap with text below the highlight
+	scaleW, scaleH float64
 
-// For visualizing the highlight rects that UniPDF sees compared to what you see in the PDF
-const VISUALIZE = true
+	// For visualizing the highlight rects that UniPDF sees compared to what you see in the PDF
+	visualize bool
+)
 
 func main() {
-	if len(os.Args) < 2 {
+	flag.Float64Var(&scaleW, "scale-w", 1.0, "scale the highlight rect's width")
+	flag.Float64Var(&scaleH, "scale-h", 1.0, "scale the highlight rect's height")
+	flag.BoolVar(&visualize, "vis", false, "create viz_*.pdf files with highlight rects drawn for debugging")
+
+	flag.Parse()
+
+	fnames := flag.Args()
+	if len(fnames) < 2 {
 		fmt.Println("Usage: go run list_highlights.go input.pdf [input2.pdf, ...]")
 		os.Exit(1)
 	}
@@ -54,7 +63,7 @@ func main() {
 	csvW.Write([]string{"Filename", "Page_num", "Highlighted_text"})
 
 	// Iterate input PDFs
-	for _, inputPath := range os.Args[1:len(os.Args)] {
+	for _, inputPath := range fnames {
 		pdfReader, f, err := model.NewPdfReaderFromFile(inputPath, nil)
 		if err != nil {
 			fmt.Printf("error: could not create PdfReader for %q: %q\n", inputPath, err)
@@ -135,7 +144,7 @@ func main() {
 					// Get center
 					cx, cy = llx+(w/2), lly+(h/2)
 					// Scale sides
-					w, h = w*SCALE_W, h*SCALE_H
+					w, h = w*scaleW, h*scaleH
 					// Recompute diagonal corners
 					llx, lly, urx, ury = cx-(w/2), cy-(h/2), cx+(w/2), cy+(h/2)
 
@@ -147,7 +156,7 @@ func main() {
 						allText = append(allText, text)
 					}
 
-					if VISUALIZE {
+					if visualize {
 						rectDef := annotator.RectangleAnnotationDef{}
 						rectDef.X = llx
 						rectDef.Y = lly
@@ -168,7 +177,7 @@ func main() {
 			}
 		}
 
-		if VISUALIZE {
+		if visualize {
 			opt := &model.ReaderToWriterOpts{
 				// Callback is executed for every page, with the page as pageNum, during the Reader-to-Writer conversion
 				PageProcessCallback: func(pageNum int, page *model.PdfPage) error {
