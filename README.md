@@ -39,7 +39,7 @@ The Python program uses the PyMuPDF library, which is being actively maintained 
 
 The Go program uses the UniPDF library, which has a freemium tier where 100 document reads/writes are free per month:
 
-- You can run the program here to get a feel for it, [UniPDF Playground: extract highlighted text in PDF](https://play.unidoc.io/p/2039bb4de4dca3af).  
+- You can run the program here to get a feel for it, [UniPDF Playground: extract highlighted text in PDF](https://play.unidoc.io/p/c7d7e7f44265f889).  
 
 - You can see how to get a free account, create an API key, and start using it here, [How To Set Metered License Key For UniDoc Products](https://www.youtube.com/watch?v=vzazZH55te4).
 
