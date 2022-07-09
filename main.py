@@ -1,30 +1,37 @@
 #!/opt/homebrew/bin/python3
 
+import argparse
 import csv
 import os.path
 import sys
 
 import fitz
 
-# Need to make the highlight regions slightly bigger to *fully*
-# contain the text regions
-SCALE_X = 1.001
-SCALE_Y = 1.001
 
+parser = argparse.ArgumentParser()
+parser.add_argument("pdfs", metavar="PDFs", type=str, nargs="+", help="the PDFs to extact highlights from")
+# Probably need to make the highlight regions slightly bigger to *fully* contain the text regions
+parser.add_argument("--scale-w", type=float, default=1.0, help="scale the highlight rect's width")
+parser.add_argument("--scale-h", type=float, default=1.0, help="scale the highlight rect's height")
 # For visualizing the highlight rects that PyMuPDF sees compared to what you see in the PDF
-VISUALIZE = True
+parser.add_argument(
+    "--vis",
+    action="store_true",
+    help="draw the highlight rects for debugging; creates viz_*.pdf files side-by-side with the oringials",
+)
+args = parser.parse_args()
 
 Writer = csv.writer(sys.stdout)
 Writer.writerow(["Filename", "Page_num", "Highlighted_text"])
 
-for input_path in sys.argv[1:]:
+for input_path in args.pdfs:
     doc: fitz.Document = fitz.open(input_path)
 
     for page_idx in range(len(doc)):
         page_num = page_idx + 1
 
         page: fitz.Page = doc[page_idx]
-        annot: fitz.Annot = page.firstAnnot
+        annot: fitz.Annot = page.first_annot
         while annot:
             if annot.type[0] != fitz.PDF_ANNOT_HIGHLIGHT:
                 # skipping non-highlight
@@ -39,12 +46,12 @@ for input_path in sys.argv[1:]:
                 # move rect to page origin (0, 0), scale up, then move back
                 rcX, rcY = (r.x0 + r.width / 2), (r.y0 + r.height / 2)
                 m = fitz.Matrix(1, 0, 0, 1, -rcX, -rcY)
-                m.concat(m, fitz.Matrix(SCALE_X, SCALE_Y))
+                m.concat(m, fitz.Matrix(args.scale_w, args.scale_h))
                 m.concat(m, fitz.Matrix(1, 0, 0, 1, rcX, rcY))
 
                 r = r.transform(m)
 
-                if VISUALIZE:
+                if args.vis:
                     # Draw a red box to visualize the hightlight rect's area (text)
                     page.draw_rect(r, width=1.5, color=(1, 0, 0))
 
@@ -57,7 +64,7 @@ for input_path in sys.argv[1:]:
 
             annot = annot.next
 
-    if VISUALIZE:
+    if args.vis:
         head, tail = os.path.split(input_path)
         viz_name = os.path.join(head, "viz_" + tail)
         doc.save(viz_name)

@@ -49,7 +49,6 @@ Both programs also have a VISUALIZE switch in the source code that you can turn 
 
 - For UniPDF I had to shrink the highlight rectangle vertically, and substantially, to avoid extraneous text (outside of the intended highlight region).
 
-
 If you're new to using Go, you can [download Go](https://go.dev/dl/) for your system (Linux) and then you can run the program interactively with `go run main.go pdf1 ...`, or you can build an executable and install it on your path and then call it like any command-line utility:
 
 ```sh
